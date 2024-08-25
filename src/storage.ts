@@ -12,7 +12,7 @@ const client = new S3({
 
 export async function upload(
     params: { bucket: string; path: string },
-    data: string
+    data: string,
 ): Promise<PutObjectCommandOutput> {
     return await client.putObject({
         Bucket: params.bucket,

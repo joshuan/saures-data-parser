@@ -4,7 +4,7 @@ import { logger } from "./logger";
 
 function request<R>(
     customOptions: Omit<RequestOptions, "hostname" | "port">,
-    postData?: string
+    postData?: string,
 ): Promise<R> {
     logger.debug("Request:", customOptions.path);
     return new Promise((resolve, reject) => {
@@ -31,7 +31,7 @@ function request<R>(
                             return Promise.reject(
                                 new Error("Response not ok", {
                                     cause: body.errors,
-                                })
+                                }),
                             );
                         }
 
@@ -42,8 +42,8 @@ function request<R>(
                 } else {
                     reject(
                         new Error(
-                            `Request failed with status code ${res.statusCode}`
-                        )
+                            `Request failed with status code ${res.statusCode}`,
+                        ),
                     );
                 }
             });
@@ -82,6 +82,6 @@ export function requestPost<R, T extends {} = {}>(path: string, formData: T) {
                 "Content-Length": Buffer.byteLength(postData),
             },
         },
-        postData
+        postData,
     );
 }

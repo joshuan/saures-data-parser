@@ -16,7 +16,7 @@ export const handler = async function () {
 
     await upload(
         { bucket: getEnv("S3_BUCKET"), path: `meters/${date}.csv` },
-        data
+        data,
     );
 
     logger.info("Data uploaded to S3");

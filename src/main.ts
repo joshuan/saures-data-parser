@@ -13,10 +13,10 @@ export async function main(date: string) {
 
     const { id: objectId } = (await getObjects(sid))[0];
     const meters = (await getMeters(sid, objectId))[0].meters.filter((meter) =>
-        Boolean(TYPES[meter.type.number])
+        Boolean(TYPES[meter.type.number]),
     );
     const datas = await Promise.all(
-        meters.map((meter) => getData(sid, meter.meter_id, date))
+        meters.map((meter) => getData(sid, meter.meter_id, date)),
     );
 
     const result: Array<TLine> = [
