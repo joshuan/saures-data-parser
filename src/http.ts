@@ -1,9 +1,9 @@
-const https = require("https");
-const querystring = require("querystring");
-const { debug } = require('./log');
+import https, {RequestOptions} from "https";
+import querystring from "querystring";
+import { logger } from './logger';
 
-function request(customOptions, postData) {
-    debug('Request:', customOptions.path);
+function request<R>(customOptions: Omit<RequestOptions, 'hostname' | 'port'>, postData?: string): Promise<R> {
+    logger.debug('Request:', customOptions.path);
     return new Promise((resolve, reject) => {
         const options = {
             hostname: "api.saures.ru",
@@ -19,7 +19,7 @@ function request(customOptions, postData) {
             });
 
             res.on("end", () => {
-                debug('Response:', res.statusCode);
+                logger.debug('Response:', res.statusCode);
                 if (res.statusCode === 200) {
                     try {
                         const body = JSON.parse(data);
@@ -50,19 +50,19 @@ function request(customOptions, postData) {
     });
 }
 
-function requestGet(path, query) {
+export function requestGet<R, T extends {} = {}>(path: string, query: T) {
     const qs = querystring.stringify(query);
 
-    return request({
+    return request<R>({
         path: path + "?" + qs,
         method: "GET"
     });
 }
 
-function requestPost(path, formData) {
+export function requestPost<R, T extends {} = {}>(path: string, formData: T) {
     const postData = querystring.stringify(formData);
 
-    return request({
+    return request<R>({
         path: path,
         method: "POST",
         headers: {
@@ -71,9 +71,3 @@ function requestPost(path, formData) {
         },
     }, postData);
 }
-
-module.exports = {
-    request,
-    requestGet,
-    requestPost,
-};
