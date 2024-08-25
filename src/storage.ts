@@ -22,6 +22,7 @@ const s3 = getS3({
     endpoint: getEnv("S3_ENDPOINT"),
     accessKeyId: getEnv("S3_ACCESS_KEY"),
     secretAccessKey: getEnv("S3_SECRET_KEY"),
+    region: getEnv("S3_REGION"),
 });
 
 export function upload(
@@ -29,17 +30,20 @@ export function upload(
     data: string
 ): Promise<S3.Types.PutObjectOutput> {
     return new Promise((resolve, reject) => {
-        s3.putObject({
-            Bucket: params.bucket,
-            Key: params.path,
-            Body: data,
-            ContentType: "text/plain",
-        }, (err, data) => {
-            if (err) {
-                return reject(err);
+        s3.putObject(
+            {
+                Bucket: params.bucket,
+                Key: params.path,
+                Body: data,
+                ContentType: "text/plain",
+            },
+            (err, data) => {
+                if (err) {
+                    return reject(err);
+                }
+
+                return resolve(data);
             }
-            
-            return resolve(data);
-        });
+        );
     });
 }
