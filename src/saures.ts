@@ -12,7 +12,7 @@ export async function login(params: {
     login: string;
     password: string;
 }): Promise<string> {
-    logger.debug("Start login to", login);
+    logger.debug("Start login to", params.login);
 
     if (process.env.SAURES_SID) {
         return process.env.SAURES_SID;

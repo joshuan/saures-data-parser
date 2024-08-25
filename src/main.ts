@@ -5,7 +5,7 @@ type TLine = [string, number, string, string];
 
 const ELECTRICITY_METRICS = ["ELECTRICITY_DAY", "ELECTRICITY_NIGHT"];
 
-export async function main() {
+export async function main(date: string) {
     const sid = await login({
         login: getEnv("SAURES_USER"),
         password: getEnv("SAURES_PASSWORD"),
@@ -16,13 +16,11 @@ export async function main() {
         Boolean(TYPES[meter.type.number])
     );
     const datas = await Promise.all(
-        meters.map((meter) =>
-            getData(sid, meter.meter_id, getEnv("PARSE_DATE"))
-        )
+        meters.map((meter) => getData(sid, meter.meter_id, date))
     );
 
     const result: Array<TLine> = [
-        ["datetime", "value", "meter", "type", "index"] as unknown as TLine,
+        ["datetime", "value", "meter", "type"] as unknown as TLine,
     ];
 
     for (const data of datas) {
@@ -34,7 +32,7 @@ export async function main() {
                     data.name +
                         " / " +
                         data.sn +
-                        (point.vals.length === 0 ? "" : ` / ${i}`),
+                        (point.vals.length === 1 ? "" : ` / ${i}`),
                     TYPES[data.type] === "ELECTRICITY"
                         ? ELECTRICITY_METRICS[i]
                         : TYPES[data.type],

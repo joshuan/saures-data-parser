@@ -4,13 +4,18 @@ import { main } from "./main";
 import { upload } from "./storage";
 
 (async () => {
-    logger.info("Start process data");
+    const date = getEnv("PROCESS_DATE");
 
-    const data = await main();
+    logger.info("Start process data for date", date);
+
+    const data = await main(date);
 
     logger.info("Got data", data.length + " symbols");
 
-    await upload({ bucket: getEnv("S3_BUCKET"), path: "data.csv" }, data);
+    await upload(
+        { bucket: getEnv("S3_BUCKET"), path: `meters/${date}.csv` },
+        data
+    );
 
     logger.info("Data uploaded to S3");
 })();
