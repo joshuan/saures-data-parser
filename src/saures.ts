@@ -1,13 +1,13 @@
-import got from 'got';
+import got from "got";
 import { readFile, saveFile } from "./utils/fs";
 import { logger } from "./utils/logger";
 
 const requestForm = got.extend({
-    baseUrl: 'https://api.saures.ru/',
+    baseUrl: "https://api.saures.ru/",
     form: true,
 });
 const requestJson = got.extend({
-    baseUrl: 'https://api.saures.ru/',
+    baseUrl: "https://api.saures.ru/",
     json: true,
 });
 
@@ -44,7 +44,7 @@ export async function login(params: {
 }): Promise<string> {
     logger.debug("Start login to", params.login);
 
-    const cachedSid = getCache<{ sid: string; lifetime: number; }>('sid');
+    const cachedSid = getCache<{ sid: string; lifetime: number }>("sid");
 
     if (cachedSid && cachedSid.lifetime > Date.now()) {
         logger.info("Using sid from cache");
@@ -56,12 +56,15 @@ export async function login(params: {
         body: {
             email: params.login,
             password: params.password,
-        }
+        },
     });
 
     const body = JSON.parse(res.body) as ILoginResponse;
 
-    saveCache('sid', { sid: body.data.sid, lifetime: Date.now() + TEN_MINUTES });
+    saveCache("sid", {
+        sid: body.data.sid,
+        lifetime: Date.now() + TEN_MINUTES,
+    });
 
     logger.info("Got sid", body.data.sid);
 
@@ -81,7 +84,11 @@ interface IDataResponse {
     };
 }
 
-export async function getData(sid: string, id: number, { start, finish } : { start: string, finish: string }) {
+export async function getData(
+    sid: string,
+    id: number,
+    { start, finish }: { start: string; finish: string },
+) {
     logger.debug("Get meter", id, "from", start, "to", finish);
 
     const res = await requestJson.get("/1.0/meter/get", {
@@ -92,9 +99,9 @@ export async function getData(sid: string, id: number, { start, finish } : { sta
             finish,
             group: "day",
             absolute: 1,
-        }
+        },
     });
-    
+
     return (res.body as IDataResponse).data;
 }
 
@@ -113,7 +120,7 @@ export async function getObjects(sid: string): Promise<{ id: string }[]> {
     const res = await requestJson.get("/1.0/user/objects", {
         query: {
             sid,
-        }
+        },
     });
 
     return (res.body as IObjectsResponse).data.objects;
@@ -138,9 +145,9 @@ export async function getMeters(sid: string, id: string) {
         query: {
             sid,
             id,
-        }
+        },
     });
-    
+
     return (res.body as IMetersResponse).data.sensors;
 }
 
