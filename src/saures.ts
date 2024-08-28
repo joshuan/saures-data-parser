@@ -1,5 +1,35 @@
-import { requestGet, requestPost } from "./http";
-import { logger } from "./logger";
+import got from 'got';
+import { readFile, saveFile } from "./utils/fs";
+import { logger } from "./utils/logger";
+
+const requestForm = got.extend({
+    baseUrl: 'https://api.saures.ru/',
+    form: true,
+});
+const requestJson = got.extend({
+    baseUrl: 'https://api.saures.ru/',
+    json: true,
+});
+
+function buildCacheFileName(id: string): string {
+    return `build/cache-${id}.json`;
+}
+
+function saveCache<T>(id: string, data: T): void {
+    saveFile(buildCacheFileName(id), JSON.stringify(data));
+}
+
+function getCache<T>(id: string): T | null {
+    try {
+        const data = readFile(buildCacheFileName(id)).trim();
+
+        return JSON.parse(data) as T;
+    } catch (err) {
+        return null;
+    }
+}
+
+const TEN_MINUTES = 1000 * 60 * 10;
 
 // Авторизация пользователя в системе https://api.saures.ru/doc/1.0/login
 interface ILoginResponse {
@@ -14,14 +44,24 @@ export async function login(params: {
 }): Promise<string> {
     logger.debug("Start login to", params.login);
 
-    if (process.env.SAURES_SID) {
-        return process.env.SAURES_SID;
+    const cachedSid = getCache<{ sid: string; lifetime: number; }>('sid');
+
+    if (cachedSid && cachedSid.lifetime > Date.now()) {
+        logger.info("Using sid from cache");
+
+        return cachedSid.sid;
     }
 
-    const body = await requestPost<ILoginResponse>("/1.0/login", {
-        email: params.login,
-        password: params.password,
+    const res = await requestForm.post("/1.0/login", {
+        body: {
+            email: params.login,
+            password: params.password,
+        }
     });
+
+    const body = JSON.parse(res.body) as ILoginResponse;
+
+    saveCache('sid', { sid: body.data.sid, lifetime: Date.now() + TEN_MINUTES });
 
     logger.info("Got sid", body.data.sid);
 
@@ -41,17 +81,21 @@ interface IDataResponse {
     };
 }
 
-export function getData(sid: string, id: number, date: string) {
-    logger.debug("Get meter", id, "for", date);
+export async function getData(sid: string, id: number, { start, finish } : { start: string, finish: string }) {
+    logger.debug("Get meter", id, "from", start, "to", finish);
 
-    return requestGet<IDataResponse>("/1.0/meter/get", {
-        sid,
-        id,
-        start: `${date}T00:00:00`,
-        finish: `${date}T23:59:59`,
-        group: "day",
-        absolute: 1,
-    }).then((body) => body.data);
+    const res = await requestJson.get("/1.0/meter/get", {
+        query: {
+            sid,
+            id,
+            start,
+            finish,
+            group: "day",
+            absolute: 1,
+        }
+    });
+    
+    return (res.body as IDataResponse).data;
 }
 
 // Объекты пользователя https://api.saures.ru/doc/1.0/user/objects
@@ -63,12 +107,16 @@ interface IObjectsResponse {
     };
 }
 
-export function getObjects(sid: string): Promise<{ id: string }[]> {
+export async function getObjects(sid: string): Promise<{ id: string }[]> {
     logger.debug("Get objects");
 
-    return requestGet<IObjectsResponse>("/1.0/user/objects", {
-        sid,
-    }).then((body) => body.data.objects);
+    const res = await requestJson.get("/1.0/user/objects", {
+        query: {
+            sid,
+        }
+    });
+
+    return (res.body as IObjectsResponse).data.objects;
 }
 
 // Показания по объекту https://api.saures.ru/doc/1.0/object/meters
@@ -83,12 +131,17 @@ interface IMetersResponse {
     };
 }
 
-export function getMeters(sid: string, id: string) {
+export async function getMeters(sid: string, id: string) {
     logger.debug("Get meters", id);
-    return requestGet<IMetersResponse>("/1.0/object/meters", {
-        sid,
-        id,
-    }).then((body) => body.data.sensors);
+
+    const res = await requestJson.get("/1.0/object/meters", {
+        query: {
+            sid,
+            id,
+        }
+    });
+    
+    return (res.body as IMetersResponse).data.sensors;
 }
 
 // Типы счётчиков

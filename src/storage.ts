@@ -1,4 +1,4 @@
-import { getEnv } from "./env";
+import { getEnv } from "./utils/env";
 import { PutObjectCommandOutput, S3 } from "@aws-sdk/client-s3";
 
 const client = new S3({

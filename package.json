@@ -4,8 +4,10 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "npm run build && node -r dotenv/config ./build/bin.js",
-    "build": "esbuild ./src/index.ts --bundle --outfile=./build/func.js --platform=node --target=esnext && esbuild ./src/bin.ts --bundle --outfile=./build/bin.js --platform=node --target=esnext",
+    "bin": "npm run build:bin && node -r dotenv/config ./build/bin.js",
+    "build": "npm run build:bin && npm run build:func",
+    "build:bin": "esbuild ./src/bin.ts --bundle --outfile=./build/bin.js --platform=node --target=esnext",
+    "build:func": "esbuild ./src/index.ts --bundle --outfile=./build/func.js --platform=node --target=esnext",
     "lint": "prettier . --check",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
@@ -13,6 +15,7 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
+    "@types/got": "^9.6.12",
     "@types/node": "^22.5.0",
     "dotenv": "^16.4.5",
     "esbuild": "^0.23.1",
@@ -20,6 +23,7 @@
     "typescript": "^5.5.4"
   },
   "dependencies": {
-    "@aws-sdk/client-s3": "^3.637.0"
+    "@aws-sdk/client-s3": "^3.637.0",
+    "got": "^9.6.0"
   }
 }
